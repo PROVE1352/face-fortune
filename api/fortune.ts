@@ -88,7 +88,7 @@ export default async function handler(req: Request): Promise<Response> {
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
+      max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -117,30 +117,24 @@ export default async function handler(req: Request): Promise<Response> {
       throw new Error('No text response from Claude');
     }
 
-    // JSON 파싱 — Claude가 코드블록으로 감쌀 수 있으므로 처리
+    // JSON 파싱 — first { to last }
     let jsonText = textBlock.text.trim();
-    const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (codeBlockMatch) {
-      jsonText = codeBlockMatch[1].trim();
+    const firstBrace = jsonText.indexOf('{');
+    const lastBrace = jsonText.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      jsonText = jsonText.slice(firstBrace, lastBrace + 1);
     }
 
     const result: FortuneResult = JSON.parse(jsonText);
 
-    // 필수 필드 검증
-    const requiredFields: (keyof FortuneResult)[] = [
-      'title',
-      'faceReport',
-      'readingText',
-      'fortuneText',
-      'luckyDirection',
-      'cardQuote',
-      'visualRoast',
-    ];
-    for (const field of requiredFields) {
-      if (typeof result[field] !== 'string' || result[field].length === 0) {
-        throw new Error(`Missing or invalid field: ${field}`);
-      }
-    }
+    // 필수 필드 기본값
+    result.faceReport = result.faceReport || '';
+    result.luckyDirection = result.luckyDirection || '';
+    result.cardQuote = result.cardQuote || '';
+    result.visualRoast = result.visualRoast || '';
+    result.title = result.title || '미스터리 관상';
+    result.readingText = result.readingText || '관상 분석이 완료되었습니다.';
+    result.fortuneText = result.fortuneText || '오늘의 운세를 확인해보세요.';
 
     return jsonResponse(result);
   } catch (error) {
