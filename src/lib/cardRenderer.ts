@@ -454,8 +454,8 @@ export async function shareCard(canvas: HTMLCanvasElement): Promise<void> {
 
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
       await navigator.share({
-        title: 'AI \uAD00\uC0C1 \uD0C0\uB85C \uACB0\uACFC',
-        text: '\uB0B4 \uAD00\uC0C1 \uD0C0\uB85C \uACB0\uACFC\uB97C \uD655\uC778\uD574\uBCF4\uC138\uC694!',
+        title: 'AI 독설 관상쟁이',
+        text: '내 관상 타로 결과를 확인해보세요!\nhttps://face-fortune-pearl.vercel.app',
         files: [file],
       });
     } else {
