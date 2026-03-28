@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Howl } from 'howler';
 import type { Intensity } from '../types';
 
 const INTENSITY_CONFIG = {
@@ -119,9 +120,13 @@ export default function CameraPage() {
     }
   }, [startCamera]);
 
-  // Navigate to scan — stop camera before leaving
+  // Navigate to scan — unlock audio context on click, then navigate
   const handleAnalyze = useCallback(() => {
     if (!selfieDataUrl) return;
+    // Pre-unlock Howler audio context via user gesture
+    const silent = new Howl({ src: ['data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='], volume: 0 });
+    silent.play();
+    setTimeout(() => silent.unload(), 100);
     stopCamera();
     navigate('/scan', { state: { selfieDataUrl, intensity } });
   }, [navigate, selfieDataUrl, intensity, stopCamera]);

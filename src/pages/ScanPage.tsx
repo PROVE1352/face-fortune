@@ -184,8 +184,23 @@ export default function ScanPage() {
       src: [BGM_SRC[intensity]],
       loop: true,
       volume: 0.5,
+      html5: true, // html5 audio for better autoplay support
     });
-    bgm.play();
+
+    // Try to play — if blocked, retry on first user interaction
+    const playPromise = bgm.play();
+    if (typeof playPromise === 'number') {
+      // Howler returns sound ID on success
+    } else {
+      // Autoplay blocked — listen for user touch to unlock
+      const unlock = () => {
+        bgm.play();
+        document.removeEventListener('touchstart', unlock);
+        document.removeEventListener('click', unlock);
+      };
+      document.addEventListener('touchstart', unlock, { once: true });
+      document.addEventListener('click', unlock, { once: true });
+    }
 
     // 극딜: 볼륨 점점 올리기
     let volInterval: ReturnType<typeof setInterval> | undefined;
