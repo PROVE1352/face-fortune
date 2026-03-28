@@ -352,11 +352,20 @@ export default function ScanPage() {
               });
             }, 600);
           } else {
-            // Slowly crawl toward 90%
-            fakePct = Math.min(fakePct + 1, 90);
-            setProgress(fakePct);
+            // Crawl toward 99% — slows down as it gets higher
+            if (fakePct < 80) {
+              fakePct += 2;
+            } else if (fakePct < 90) {
+              fakePct += 1;
+            } else if (fakePct < 95) {
+              fakePct += 0.5;
+            } else {
+              fakePct += 0.2;
+            }
+            fakePct = Math.min(fakePct, 99);
+            setProgress(Math.round(fakePct));
           }
-        }, 300);
+        }, 200);
 
         // Store for cleanup
         batchTimer = fakeInterval as unknown as ReturnType<typeof setTimeout>;
