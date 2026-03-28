@@ -9,11 +9,12 @@ import type { FaceMetrics } from '../types';
 // Singleton
 // ---------------------------------------------------------------------------
 let faceLandmarker: FaceLandmarker | null = null;
+let initPromise: Promise<FaceLandmarker> | null = null;
 
 const MODEL_URL =
   'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
 const WASM_CDN =
-  'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm';
+  'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm';
 
 // ---------------------------------------------------------------------------
 // Utility: Euclidean distance between two landmarks
@@ -43,21 +44,30 @@ function distance2D(a: NormalizedLandmark, b: NormalizedLandmark): number {
  */
 export async function initFaceLandmarker(): Promise<FaceLandmarker> {
   if (faceLandmarker) return faceLandmarker;
+  if (initPromise) return initPromise;
 
-  const vision = await FilesetResolver.forVisionTasks(WASM_CDN);
+  initPromise = (async () => {
+    const vision = await FilesetResolver.forVisionTasks(WASM_CDN);
+    faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: MODEL_URL,
+        delegate: 'GPU',
+      },
+      runningMode: 'IMAGE',
+      numFaces: 1,
+      outputFaceBlendshapes: false,
+      outputFacialTransformationMatrixes: false,
+    });
+    return faceLandmarker;
+  })();
 
-  faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: MODEL_URL,
-      delegate: 'GPU',
-    },
-    runningMode: 'IMAGE',
-    numFaces: 1,
-    outputFaceBlendshapes: false,
-    outputFacialTransformationMatrixes: false,
-  });
+  return initPromise;
+}
 
-  return faceLandmarker;
+export function disposeFaceLandmarker(): void {
+  faceLandmarker?.close();
+  faceLandmarker = null;
+  initPromise = null;
 }
 
 // ---------------------------------------------------------------------------

@@ -386,7 +386,6 @@ export async function renderTarotCard({
   ctx.font = 'bold 13px sans-serif';
   const badgeMetrics = ctx.measureText(badgeText);
   const badgePadH = 14;
-  const badgePadV = 8;
   const badgeW = badgeMetrics.width + badgePadH * 2;
   const badgeH = 26;
   const badgeX = CARD_W - PADDING - 20 - badgeW;

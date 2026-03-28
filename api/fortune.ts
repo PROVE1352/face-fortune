@@ -5,6 +5,17 @@ export const config = {
   runtime: 'edge',
 };
 
+const client = new Anthropic();
+
+const VALID_INTENSITIES: Intensity[] = ['warm', 'normal', 'brutal'];
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 const SYSTEM_PROMPT = `당신은 '독설 관상쟁이'입니다. 수백 년간 관상을 봐온 신비로운 존재이며, 날카롭고 재치 있는 독설로 유명합니다.
 
 ## 규칙
@@ -42,10 +53,7 @@ ${intensity}
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Method not allowed' }, 405);
   }
 
   try {
@@ -56,25 +64,27 @@ export default async function handler(req: Request): Promise<Response> {
     };
 
     if (!image || !metrics || !intensity) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: image, metrics, intensity' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } },
-      );
+      return jsonResponse({ error: 'Missing required fields: image, metrics, intensity' }, 400);
     }
 
-    // base64 data URL에서 순수 base64 데이터와 미디어 타입 추출
+    if (!VALID_INTENSITIES.includes(intensity)) {
+      return jsonResponse({ error: `Invalid intensity: ${intensity}` }, 400);
+    }
+
     let base64Data = image;
     let mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' = 'image/jpeg';
 
     if (image.startsWith('data:')) {
-      const match = image.match(/^data:(image\/\w+);base64,(.+)$/);
-      if (match) {
-        mediaType = match[1] as typeof mediaType;
-        base64Data = match[2];
+      const commaIdx = image.indexOf(',');
+      if (commaIdx !== -1) {
+        const header = image.slice(5, commaIdx);
+        const semiIdx = header.indexOf(';');
+        if (semiIdx !== -1) {
+          mediaType = header.slice(0, semiIdx) as typeof mediaType;
+        }
+        base64Data = image.slice(commaIdx + 1);
       }
     }
-
-    const client = new Anthropic();
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6-20250514',
@@ -132,19 +142,10 @@ export default async function handler(req: Request): Promise<Response> {
       }
     }
 
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse(result);
   } catch (error) {
     console.error('Fortune API error:', error);
-
     const message = error instanceof Error ? error.message : 'Internal server error';
-    const status = message.includes('Missing required fields') ? 400 : 500;
-
-    return new Response(JSON.stringify({ error: message }), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: message }, 500);
   }
 }
