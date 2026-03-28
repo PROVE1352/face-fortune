@@ -131,11 +131,12 @@ export function calculateMetrics(landmarks: NormalizedLandmark[]): FaceMetrics {
   // ── Mouth corner angle ──────────────────────────────────────────────
   // Right corner: 61, Left corner: 291
   // Midpoint between the two corners serves as the pivot.
-  const mouthMid: NormalizedLandmark = {
+  const mouthMid = {
     x: (landmarks[61].x + landmarks[291].x) / 2,
     y: (landmarks[61].y + landmarks[291].y) / 2,
     z: ((landmarks[61].z ?? 0) + (landmarks[291].z ?? 0)) / 2,
-  };
+    visibility: 1,
+  } satisfies NormalizedLandmark;
   // Average angle of left and right corners relative to the midpoint.
   const rightCornerAngle = calcAngleDeg(mouthMid, landmarks[61]);
   const leftCornerAngle = calcAngleDeg(mouthMid, landmarks[291]);
