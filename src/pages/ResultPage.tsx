@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import type { Intensity, FaceMetrics, FortuneResult } from '../types';
 import { renderTarotCard, downloadCard, shareCard } from '../lib/cardRenderer';
 
@@ -49,46 +50,91 @@ interface MetricRow {
 function buildMetricRows(m: FaceMetrics): MetricRow[] {
   return [
     {
-      label: '\uC88C\uC6B0 \uB300\uCE6D\uB3C4',
+      label: '좌우 대칭도',
       value: `${(m.faceSymmetry * 100).toFixed(1)}%`,
       bar: m.faceSymmetry,
     },
     {
-      label: '\uC5BC\uAD74 \uC885\uD6A1\uBE44',
+      label: '얼굴 종횡비',
       value: m.faceWidthHeightRatio.toFixed(3),
       bar: Math.min(m.faceWidthHeightRatio / 1.2, 1),
     },
     {
-      label: '\uC67C\uCABD \uB208\uC369 \uAC01\uB3C4',
+      label: '왼쪽 눈썹 각도',
       value: `${m.leftEyebrowAngle.toFixed(1)}\u00B0`,
     },
     {
-      label: '\uC624\uB978\uCABD \uB208\uC369 \uAC01\uB3C4',
+      label: '오른쪽 눈썹 각도',
       value: `${m.rightEyebrowAngle.toFixed(1)}\u00B0`,
     },
     {
-      label: '\uB208\uC369 \uAC01\uB3C4 \uCC28\uC774',
+      label: '눈썹 각도 차이',
       value: `${m.eyebrowAngleDiff.toFixed(1)}\u00B0`,
     },
     {
-      label: '\uCF54 \uBE44\uC728',
+      label: '코 비율',
       value: m.noseRatio.toFixed(3),
       bar: Math.min(m.noseRatio / 2, 1),
     },
     {
-      label: '\uC785\uAF2C\uB9AC \uAC01\uB3C4',
+      label: '입꼬리 각도',
       value: `${m.mouthCornerAngle.toFixed(1)}\u00B0`,
     },
     {
-      label: '\uC774\uB9C8 \uBE44\uC728',
+      label: '이마 비율',
       value: `${(m.foreheadRatio * 100).toFixed(1)}%`,
       bar: m.foreheadRatio,
     },
     {
-      label: '\uBBF8\uAC04 \uAC70\uB9AC',
+      label: '미간 거리',
       value: m.glabellaDistance.toFixed(4),
     },
   ];
+}
+
+// ---------------------------------------------------------------------------
+// Confetti burst for card flip
+// ---------------------------------------------------------------------------
+
+function fireFlipConfetti(intensity: Intensity) {
+  const base = {
+    origin: { x: 0.5, y: 0.5 },
+    gravity: 0.6,
+    ticks: 120,
+    disableForReducedMotion: true,
+  };
+
+  if (intensity === 'warm') {
+    confetti({
+      ...base,
+      particleCount: 60,
+      shapes: ['circle'],
+      colors: ['#FFB7C5', '#FFF0F5', '#FFD700', '#FFC0CB'],
+      spread: 140,
+      scalar: 0.9,
+    });
+  } else if (intensity === 'brutal') {
+    confetti({
+      ...base,
+      particleCount: 50,
+      shapes: ['circle'],
+      colors: ['#E74C3C', '#FF6347', '#FF4500', '#8B0000', '#FFD700'],
+      spread: 100,
+      scalar: 1.1,
+      startVelocity: 35,
+    });
+  } else {
+    // normal — starlight burst
+    confetti({
+      ...base,
+      particleCount: 70,
+      shapes: ['star', 'circle'],
+      colors: ['#D4AF37', '#9B59B6', '#E8D5B7', '#C4B5FD', '#FFFFFF'],
+      spread: 160,
+      scalar: 1,
+      startVelocity: 30,
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -100,9 +146,10 @@ export default function ResultPage() {
   const navigate = useNavigate();
   const state = location.state as ResultState | null;
 
-  const cardContainerRef = useRef<HTMLDivElement>(null);
   const cardCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [cardReady, setCardReady] = useState(false);
+  const [cardDataUrl, setCardDataUrl] = useState<string | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   // Derived (safe before guard — uses fallback)
   const selfieDataUrl = state?.selfieDataUrl ?? '';
@@ -114,7 +161,7 @@ export default function ResultPage() {
   const bg = ACCENT_BG[intensity];
 
   // ---------------------------------------------------------------------------
-  // Render tarot card into DOM
+  // Render tarot card into canvas
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!selfieDataUrl || !result || !metrics) return;
@@ -131,15 +178,7 @@ export default function ResultPage() {
         if (cancelled) return;
 
         cardCanvasRef.current = canvas;
-
-        if (cardContainerRef.current) {
-          canvas.style.width = '100%';
-          canvas.style.height = 'auto';
-          canvas.style.borderRadius = '12px';
-          canvas.style.display = 'block';
-          cardContainerRef.current.innerHTML = '';
-          cardContainerRef.current.appendChild(canvas);
-        }
+        setCardDataUrl(canvas.toDataURL('image/png'));
         setCardReady(true);
       } catch (err) {
         console.error('Card render error:', err);
@@ -150,6 +189,19 @@ export default function ResultPage() {
       cancelled = true;
     };
   }, [selfieDataUrl, result, intensity, metrics]);
+
+  // ---------------------------------------------------------------------------
+  // 3D flip trigger — 1.5s after card image is ready
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!cardReady) return;
+    const timer = setTimeout(() => {
+      setIsFlipped(true);
+      // fire confetti slightly after flip starts
+      setTimeout(() => fireFlipConfetti(intensity), 400);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [cardReady, intensity]);
 
   // ---------------------------------------------------------------------------
   // Button handlers
@@ -191,53 +243,88 @@ export default function ResultPage() {
       {/* Content wrapper -- scrollable */}
       <div className="relative z-10 flex w-full max-w-sm flex-col gap-8">
         {/* ================================================================
-            1. Tarot card
+            Title badge
            ================================================================ */}
-        <section className="flex flex-col items-center gap-3">
-          {/* Card container */}
-          <div
-            ref={cardContainerRef}
-            className="w-full overflow-hidden rounded-xl"
-            style={{
-              boxShadow: `0 4px 40px ${glow}, 0 0 80px ${glow.replace('0.35', '0.1')}`,
-              border: `1px solid ${accent}33`,
-              minHeight: 200,
-              background: cardReady ? 'transparent' : `${bg}`,
-            }}
-          >
-            {/* Placeholder while rendering */}
-            {!cardReady && (
-              <div
-                className="flex h-60 items-center justify-center"
-                style={{ color: `${accent}88` }}
-              >
-                <span className="animate-pulse text-sm tracking-wide">
-                  카드 생성 중...
-                </span>
+        <div
+          className="result-stagger result-title-badge text-2xl"
+          style={{
+            color: accent,
+            animationDelay: '0.2s',
+            textShadow: `0 0 20px ${glow}`,
+          }}
+        >
+          {safeResult.title}
+        </div>
+
+        {/* ================================================================
+            1. Tarot card — 3D flip
+           ================================================================ */}
+        <section
+          className="result-stagger flex flex-col items-center"
+          style={{ animationDelay: '0.4s' }}
+        >
+          <div className="tarot-scene">
+            <div className={`tarot-card${isFlipped ? ' flipped' : ''}`}>
+              {/* --- BACK face (default visible) --- */}
+              <div className="tarot-face tarot-back">
+                <div className="tarot-back-glow" />
+                <div className="tarot-back-corner tl" />
+                <div className="tarot-back-corner tr" />
+                <div className="tarot-back-corner bl" />
+                <div className="tarot-back-corner br" />
+                <span className="tarot-back-sub">FORTUNE AWAITS</span>
+                <span className="tarot-back-symbol">{'\u2726'}</span>
+                <span className="tarot-back-title">AI 관상 타로</span>
+                <span className="tarot-back-sub">{'\u2500\u2500 \u2726 \u2726 \u2726 \u2500\u2500'}</span>
               </div>
-            )}
+
+              {/* --- FRONT face (visible after flip) --- */}
+              <div className="tarot-face tarot-front">
+                {cardDataUrl ? (
+                  <img
+                    src={cardDataUrl}
+                    alt="타로카드 결과"
+                    className="block w-full rounded-2xl"
+                    style={{
+                      boxShadow: `0 4px 40px ${glow}, 0 0 80px ${glow.replace('0.35', '0.12')}`,
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="flex aspect-[2/3] items-center justify-center rounded-2xl"
+                    style={{
+                      background: bg,
+                      border: `1px solid ${accent}33`,
+                      color: `${accent}88`,
+                    }}
+                  >
+                    <span className="animate-pulse text-sm tracking-wide">
+                      카드 생성 중...
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
         {/* ================================================================
             2. 얼굴 분석 리포트
            ================================================================ */}
-        <section>
-          {/* Section header */}
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-lg">&#128208;</span>
-            <h2
-              className="text-base font-bold"
-              style={{ color: accent, fontFamily: 'var(--font-serif-kr)' }}
-            >
-              얼굴 분석 리포트
-            </h2>
+        <section
+          className="result-stagger result-section-card"
+          style={{
+            '--section-accent': accent,
+            animationDelay: '0.6s',
+          } as React.CSSProperties}
+        >
+          <div className="result-section-header" style={{ color: accent }}>
+            <span className="text-lg">{'\uD83D\uDCD0'}</span>
+            <h2>얼굴 분석 리포트</h2>
           </div>
 
-          {/* Divider */}
-          <div className="mb-4 h-px w-full" style={{ background: `${accent}33` }} />
+          <div className="result-section-divider" style={{ '--section-accent': `${accent}55` } as React.CSSProperties} />
 
-          {/* Metrics grid */}
           <div className="flex flex-col gap-3">
             {metricRows.map((row) => (
               <div key={row.label} className="flex flex-col gap-1">
@@ -258,11 +345,11 @@ export default function ResultPage() {
 
                 {row.bar != null && (
                   <div
-                    className="h-1 w-full overflow-hidden rounded-full"
+                    className="metric-bar-track"
                     style={{ backgroundColor: `${accent}14` }}
                   >
                     <div
-                      className="h-full rounded-full"
+                      className="metric-bar-fill"
                       style={{
                         width: `${Math.round(row.bar * 100)}%`,
                         background: `linear-gradient(90deg, ${accent}66, ${accent})`,
@@ -279,24 +366,25 @@ export default function ResultPage() {
         {/* ================================================================
             3. 관상 해석
            ================================================================ */}
-        <section>
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-lg">&#128302;</span>
-            <h2
-              className="text-base font-bold"
-              style={{ color: accent, fontFamily: 'var(--font-serif-kr)' }}
-            >
-              관상 해석
-            </h2>
+        <section
+          className="result-stagger result-section-card"
+          style={{
+            '--section-accent': accent,
+            animationDelay: '0.8s',
+          } as React.CSSProperties}
+        >
+          <div className="result-section-header" style={{ color: accent }}>
+            <span className="text-lg">{'\uD83D\uDD2E'}</span>
+            <h2>관상 해석</h2>
           </div>
 
-          <div className="mb-4 h-px w-full" style={{ background: `${accent}33` }} />
+          <div className="result-section-divider" style={{ '--section-accent': `${accent}55` } as React.CSSProperties} />
 
           <div
             className="rounded-xl p-4"
             style={{
-              background: bg,
-              border: `1px solid ${accent}22`,
+              background: `linear-gradient(135deg, ${bg}, transparent)`,
+              border: `1px solid ${accent}15`,
             }}
           >
             <p
@@ -314,24 +402,25 @@ export default function ResultPage() {
         {/* ================================================================
             4. 오늘의 운세
            ================================================================ */}
-        <section>
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-lg">&#127919;</span>
-            <h2
-              className="text-base font-bold"
-              style={{ color: accent, fontFamily: 'var(--font-serif-kr)' }}
-            >
-              오늘의 운세
-            </h2>
+        <section
+          className="result-stagger result-section-card"
+          style={{
+            '--section-accent': accent,
+            animationDelay: '1.0s',
+          } as React.CSSProperties}
+        >
+          <div className="result-section-header" style={{ color: accent }}>
+            <span className="text-lg">{'\uD83C\uDFAF'}</span>
+            <h2>오늘의 운세</h2>
           </div>
 
-          <div className="mb-4 h-px w-full" style={{ background: `${accent}33` }} />
+          <div className="result-section-divider" style={{ '--section-accent': `${accent}55` } as React.CSSProperties} />
 
           <div
             className="rounded-xl p-4"
             style={{
-              background: bg,
-              border: `1px solid ${accent}22`,
+              background: `linear-gradient(135deg, ${bg}, transparent)`,
+              border: `1px solid ${accent}15`,
             }}
           >
             <p
@@ -348,26 +437,36 @@ export default function ResultPage() {
           {/* Lucky direction */}
           {safeResult.luckyDirection && (
             <p
-              className="mt-3 text-center text-sm"
-              style={{ color: accent }}
+              className="mt-4 text-center text-sm"
+              style={{
+                color: accent,
+                fontFamily: 'var(--font-batang)',
+                textShadow: `0 0 8px ${glow}`,
+              }}
             >
-              &#129517; 행운의 방향: {safeResult.luckyDirection}
+              {'\uD83E\uDDED'} 행운의 방향: {safeResult.luckyDirection}
             </p>
           )}
         </section>
 
         {/* ================================================================
-            5. Bottom divider
+            5. Bottom divider — decorative
            ================================================================ */}
         <div
-          className="h-px w-full"
-          style={{ background: `${accent}22` }}
+          className="result-stagger h-px w-full"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${accent}33, transparent)`,
+            animationDelay: '1.2s',
+          }}
         />
 
         {/* ================================================================
             6. Action buttons
            ================================================================ */}
-        <div className="flex gap-3">
+        <div
+          className="result-stagger flex gap-3"
+          style={{ animationDelay: '1.3s' }}
+        >
           <button
             className="result-action-btn flex-1"
             style={{
@@ -377,7 +476,7 @@ export default function ResultPage() {
             onClick={handleDownload}
             disabled={!cardReady}
           >
-            <span className="text-base">&#128190;</span>
+            <span className="text-base">{'\uD83D\uDCBE'}</span>
             <span>저장</span>
           </button>
 
@@ -390,7 +489,7 @@ export default function ResultPage() {
             onClick={handleShare}
             disabled={!cardReady}
           >
-            <span className="text-base">&#128228;</span>
+            <span className="text-base">{'\uD83D\uDCE4'}</span>
             <span>공유</span>
           </button>
 
@@ -402,12 +501,11 @@ export default function ResultPage() {
             } as React.CSSProperties}
             onClick={handleRetry}
           >
-            <span className="text-base">&#128260;</span>
+            <span className="text-base">{'\uD83D\uDD04'}</span>
             <span>다시하기</span>
           </button>
         </div>
       </div>
-
     </div>
   );
 }

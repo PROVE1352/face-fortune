@@ -375,3 +375,254 @@ body {
 .result-action-btn:not(:disabled):active {
   transform: translateY(0);
 }
+
+/* ===========================
+   ResultPage: Tarot Card 3D Flip
+   =========================== */
+
+/* -- Perspective container -- */
+.tarot-scene {
+  perspective: 1000px;
+  width: 100%;
+}
+
+/* -- The rotating card -- */
+.tarot-card {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tarot-card.flipped {
+  transform: rotateY(180deg);
+}
+
+/* -- Front & back faces -- */
+.tarot-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.tarot-back {
+  /* Back face: visible by default */
+  position: relative;
+  aspect-ratio: 600 / 1050;
+  background: linear-gradient(
+    135deg,
+    #0e0a2a 0%,
+    #1a1050 25%,
+    #231660 50%,
+    #1a1050 75%,
+    #0e0a2a 100%
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* Gold ornamental border (outer) */
+.tarot-back::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 2px solid var(--color-gold);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* Inner decorative border */
+.tarot-back::after {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* Central gold symbol */
+.tarot-back-symbol {
+  font-size: 64px;
+  color: var(--color-gold);
+  text-shadow:
+    0 0 20px rgba(212, 175, 55, 0.6),
+    0 0 40px rgba(212, 175, 55, 0.3);
+  animation: symbol-pulse 3s ease-in-out infinite;
+  line-height: 1;
+}
+
+@keyframes symbol-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 20px rgba(212, 175, 55, 0.6),
+      0 0 40px rgba(212, 175, 55, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow:
+      0 0 30px rgba(212, 175, 55, 0.8),
+      0 0 60px rgba(212, 175, 55, 0.4),
+      0 0 80px rgba(155, 89, 182, 0.2);
+    transform: scale(1.05);
+  }
+}
+
+.tarot-back-title {
+  font-family: var(--font-serif-kr);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-gold);
+  letter-spacing: 6px;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+}
+
+.tarot-back-sub {
+  font-family: var(--font-batang);
+  font-size: 13px;
+  color: rgba(212, 175, 55, 0.5);
+  letter-spacing: 3px;
+}
+
+/* Corner ornaments for card back */
+.tarot-back-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: var(--color-gold);
+  border-style: solid;
+  opacity: 0.6;
+}
+.tarot-back-corner.tl { top: 24px; left: 24px; border-width: 2px 0 0 2px; }
+.tarot-back-corner.tr { top: 24px; right: 24px; border-width: 2px 2px 0 0; }
+.tarot-back-corner.bl { bottom: 24px; left: 24px; border-width: 0 0 2px 2px; }
+.tarot-back-corner.br { bottom: 24px; right: 24px; border-width: 0 2px 2px 0; }
+
+/* Radial glow on back */
+.tarot-back-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(155, 89, 182, 0.15) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+/* Front face (rotated 180 so it shows when card is flipped) */
+.tarot-front {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transform: rotateY(180deg);
+}
+
+/* ===========================
+   ResultPage: Section Cards
+   =========================== */
+
+.result-section-card {
+  background: linear-gradient(
+    145deg,
+    rgba(26, 17, 69, 0.6) 0%,
+    rgba(13, 11, 30, 0.8) 100%
+  );
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle top-edge glow for section cards */
+.result-section-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--section-accent, var(--color-gold)) 50%,
+    transparent
+  );
+  opacity: 0.5;
+}
+
+/* Section header styling */
+.result-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-family: var(--font-serif-kr);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.result-section-divider {
+  height: 1px;
+  width: 100%;
+  margin-bottom: 16px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--section-accent, rgba(212, 175, 55, 0.3)) 50%,
+    transparent
+  );
+}
+
+/* ===========================
+   ResultPage: Title badge area
+   =========================== */
+
+.result-title-badge {
+  font-family: var(--font-serif-kr);
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.4;
+  letter-spacing: 1px;
+}
+
+/* ===========================
+   ResultPage: stagger animation
+   =========================== */
+
+.result-stagger {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: result-stagger-in 0.6s ease-out forwards;
+}
+
+@keyframes result-stagger-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===========================
+   ResultPage: metric bar
+   =========================== */
+
+.metric-bar-track {
+  height: 4px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 1s ease-out;
+}

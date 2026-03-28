@@ -103,7 +103,7 @@ const STYLES: Record<Intensity, IntensityStyle> = {
 // ─── 카드 상수 ──────────────────────────────────────────────────
 
 const CARD_W = 600;
-const CARD_H = 900;
+const CARD_H = 1050;
 const PADDING = 40;
 const SELFIE_RADIUS = 100;
 const SELFIE_CX = CARD_W / 2;
@@ -284,17 +284,24 @@ export async function renderTarotCard({
   ctx.fillText('\u2500\u2500\u2500 \u2726 \u2726 \u2726 \u2500\u2500\u2500', CARD_W / 2, currentY);
   currentY += 30;
 
-  // ─── 6. 칭호 ─────────────────────────────────────────────────
+  // ─── 6. 칭호 (자동 줄바꿈) ──────────────────────────────────
 
-  ctx.font = 'bold 28px serif';
+  ctx.font = 'bold 24px serif';
   ctx.fillStyle = style.textColor;
   ctx.textAlign = 'center';
-  ctx.fillText(`\u300E ${result.title} \u300F`, CARD_W / 2, currentY);
-  currentY += 38;
+  currentY = drawWrappedText(
+    ctx,
+    `\u300E ${result.title} \u300F`,
+    CARD_W / 2,
+    currentY,
+    CARD_W - PADDING * 2 - 40,
+    32,
+  );
+  currentY += 16;
 
   // ─── 7. 수치 요약 (faceReport) ────────────────────────────────
 
-  ctx.font = '15px sans-serif';
+  ctx.font = '16px sans-serif';
   ctx.fillStyle = style.subtitleColor;
   ctx.textAlign = 'center';
   currentY = drawWrappedText(
@@ -303,7 +310,7 @@ export async function renderTarotCard({
     CARD_W / 2,
     currentY,
     CARD_W - PADDING * 2 - 20,
-    22,
+    24,
   );
   currentY += 12;
 
@@ -350,15 +357,24 @@ export async function renderTarotCard({
 
   // ─── 9. 행운의 방향 ──────────────────────────────────────────
 
-  ctx.font = '15px sans-serif';
-  ctx.fillStyle = style.accentColor;
-  ctx.textAlign = 'center';
-  ctx.fillText(`\uD83E\uDDED \uD589\uC6B4\uC758 \uBC29\uD5A5: ${result.luckyDirection}`, CARD_W / 2, currentY);
-  currentY += 32;
+  if (result.luckyDirection) {
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = style.accentColor;
+    ctx.textAlign = 'center';
+    currentY = drawWrappedText(
+      ctx,
+      `🧭 행운의 방향: ${result.luckyDirection}`,
+      CARD_W / 2,
+      currentY,
+      CARD_W - PADDING * 2 - 20,
+      24,
+    );
+    currentY += 16;
+  }
 
   // ─── 10. 카드 한마디 ─────────────────────────────────────────
 
-  ctx.font = 'italic 16px serif';
+  ctx.font = 'italic 18px serif';
   ctx.fillStyle = style.textColor;
   ctx.textAlign = 'center';
   currentY = drawWrappedText(

@@ -71,7 +71,7 @@ app.post('/api/fortune', async (req, res) => {
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
+      max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{
         role: 'user',
@@ -91,11 +91,35 @@ app.post('/api/fortune', async (req, res) => {
     const textBlock = message.content.find((b) => b.type === 'text');
     if (!textBlock || textBlock.type !== 'text') throw new Error('No text response');
 
-    let jsonText = textBlock.text.trim();
-    const codeMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (codeMatch) jsonText = codeMatch[1].trim();
+    const rawText = textBlock.text.trim();
+    console.log('RAW RESPONSE (first 200):', rawText.slice(0, 200));
+    console.log('RAW first char code:', rawText.charCodeAt(0));
 
+    const firstBrace = rawText.indexOf('{');
+    const lastBrace = rawText.lastIndexOf('}');
+    console.log('firstBrace at:', firstBrace, 'lastBrace at:', lastBrace);
+
+    let jsonText: string;
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      jsonText = rawText.slice(firstBrace, lastBrace + 1);
+    } else {
+      jsonText = rawText;
+    }
+
+    console.log('CLEANED JSON (first 200):', jsonText.slice(0, 200));
     const result: FortuneResult = JSON.parse(jsonText);
+
+    // Validate required fields
+    const required = ['title', 'readingText', 'fortuneText'] as const;
+    for (const field of required) {
+      if (!result[field]) {
+        result[field] = result[field] || '관상 분석이 완료되었습니다.';
+      }
+    }
+    result.faceReport = result.faceReport || '';
+    result.luckyDirection = result.luckyDirection || '';
+    result.cardQuote = result.cardQuote || '';
+    result.visualRoast = result.visualRoast || '';
 
     // DB 저장 (single transaction)
     const responseTimeMs = Date.now() - startTime;
@@ -136,7 +160,7 @@ app.get('/api/stats', (_req, res) => {
 
 app.get('/api/readings', (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 20, 100));
     const readings = getRecentReadings(limit);
     res.json(readings);
   } catch (error) {

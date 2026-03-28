@@ -173,9 +173,8 @@ export default function ScanPage() {
           if (landmarks) {
             metricsResult = calculateMetrics(landmarks);
           }
-          const base64 = selfieDataUrl.includes(',')
-            ? selfieDataUrl.split(',')[1]
-            : selfieDataUrl;
+          // Send full data URL — server handles extraction
+          const base64 = selfieDataUrl;
           if (!metricsResult) {
             throw new Error('얼굴을 감지하지 못했습니다');
           }
