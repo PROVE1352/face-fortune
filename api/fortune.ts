@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { FaceMetrics, FortuneResult, Intensity } from '../src/types';
+import type { FaceMetrics, FortuneResult, Intensity } from '../src/types/index.js';
 
 export const config = {
   runtime: 'edge',
