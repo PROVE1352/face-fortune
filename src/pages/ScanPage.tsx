@@ -1,9 +1,23 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Howl } from 'howler';
 import type { NormalizedLandmark } from '@mediapipe/tasks-vision';
 import type { Intensity, FaceMetrics, FortuneResult } from '../types';
 import { detectFace, calculateMetrics } from '../lib/faceAnalysis';
 import { generateFortune } from '../lib/fortuneApi';
+
+// Cat GIF + BGM per intensity
+const CAT_GIF: Record<Intensity, string> = {
+  warm: '/assets/cats/warm.gif',
+  normal: '/assets/cats/normal.gif',
+  brutal: '/assets/cats/brutal.gif',
+};
+
+const BGM_SRC: Record<Intensity, string> = {
+  warm: '/assets/audio/warm.mp3',
+  normal: '/assets/audio/normal.mp3',
+  brutal: '/assets/audio/brutal.mp3',
+};
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -104,6 +118,37 @@ export default function ScanPage() {
     },
     [intensity],
   );
+
+  // ---------------------------------------------------------------------------
+  // BGM: play on mount, stop on unmount
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!state?.selfieDataUrl || !state?.intensity) return;
+    const bgm = new Howl({
+      src: [BGM_SRC[intensity]],
+      loop: true,
+      volume: 0.5,
+    });
+    bgm.play();
+
+    // 극딜: 볼륨 점점 올리기
+    let volInterval: ReturnType<typeof setInterval> | undefined;
+    if (intensity === 'brutal') {
+      let vol = 0.3;
+      bgm.volume(vol);
+      volInterval = setInterval(() => {
+        vol = Math.min(vol + 0.03, 0.8);
+        bgm.volume(vol);
+        if (vol >= 0.8) clearInterval(volInterval);
+      }, 500);
+    }
+
+    return () => {
+      bgm.fade(bgm.volume(), 0, 500);
+      setTimeout(() => bgm.unload(), 600);
+      if (volInterval) clearInterval(volInterval);
+    };
+  }, [intensity, state]);
 
   // ---------------------------------------------------------------------------
   // Main effect: run analysis + animation concurrently
