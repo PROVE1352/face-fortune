@@ -283,13 +283,14 @@ export default function ScanPage() {
           }
           fortuneResult = await generateFortune(base64, metricsResult, intensity);
         } catch (err) {
-          console.error('Fortune API error:', err);
+          const errMsg = err instanceof Error ? err.message : String(err);
+          console.error('Fortune API error:', errMsg);
           // Fallback so the user can still see a result
           if (!fortuneResult) {
             fortuneResult = {
               title: '\uBBF8\uC2A4\uD130\uB9AC \uAD00\uC0C1',
               faceReport: '\uC5BC\uAD74 \uBD84\uC11D\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
-              readingText: 'API \uC751\uB2F5\uC744 \uBC1B\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.',
+              readingText: `API 응답을 받지 못했습니다: ${errMsg}`,
               fortuneText: '\uC624\uB298\uC740 \uC7AC\uC2DC\uB3C4\uAC00 \uD589\uC6B4\uC744 \uBD80\uB974\uB294 \uB0A0\uC785\uB2C8\uB2E4.',
               luckyDirection: '\uB3D9\uCABD',
               cardQuote: '\uC774 \uC5BC\uAD74\uC5D0\uB294 \uC228\uACA8\uC9C4 \uC774\uC57C\uAE30\uAC00 \uC788\uB2E4.',
