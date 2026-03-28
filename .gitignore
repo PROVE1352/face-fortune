@@ -1,3 +1,8 @@
+# DB
+*.db
+*.db-wal
+*.db-shm
+
 # Logs
 logs
 *.log
@@ -29,3 +34,4 @@ dist-ssr
 *.sln
 *.sw?
 *.tsbuildinfo
+.vercel
