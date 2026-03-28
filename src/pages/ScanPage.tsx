@@ -6,13 +6,7 @@ import type { Intensity, FaceMetrics, FortuneResult } from '../types';
 import { detectFace, calculateMetrics } from '../lib/faceAnalysis';
 import { generateFortune } from '../lib/fortuneApi';
 
-// Cat GIF + BGM per intensity
-const CAT_GIF: Record<Intensity, string> = {
-  warm: '/assets/cats/warm.gif',
-  normal: '/assets/cats/normal.gif',
-  brutal: '/assets/cats/brutal.gif',
-};
-
+// BGM per intensity
 const BGM_SRC: Record<Intensity, string> = {
   warm: '/assets/audio/warm.mp3',
   normal: '/assets/audio/normal.mp3',
@@ -35,12 +29,74 @@ const INTENSITY_GLOW: Record<Intensity, string> = {
   brutal: 'rgba(231, 76, 60, 0.6)',
 };
 
-const LOADING_TEXTS = [
-  '\uC5BC\uAD74 \uAE30\uC6B4\uC744 \uAC10\uC9C0\uD558\uB294 \uC911...',
-  '\uB208\uC369\uC5D0\uC11C \uAC15\uD55C \uC758\uC2EC\uC758 \uAE30\uC6B4\uC774...',
-  '\uCF54\uC5D0\uC11C \uC7AC\uBB3C\uC6B4\uC744 \uC77D\uB294 \uC911...',
-  '\uC785\uAF2C\uB9AC \uAC01\uB3C4 \uBD84\uC11D \uC644\uB8CC. \uACB0\uACFC\uAC00 \uC2EC\uAC01\uD569\uB2C8\uB2E4...',
-];
+const LOADING_TEXTS: Record<Intensity, string[]> = {
+  warm: [
+    '따뜻한 기운을 감지하는 중...',
+    '눈썹에서 부드러운 봄바람이...',
+    '코끝에서 행운의 꽃향기가...',
+    '입꼬리에서 미소의 기운을 읽는 중...',
+    '이마에서 지혜의 빛이 감지됩니다...',
+    '얼굴에서 복덩이 기운이 느껴져요...',
+    '눈빛에서 따뜻한 카리스마가...',
+    '광대뼈에서 행복의 기운이...',
+    '턱선에서 인복의 기운을 읽는 중...',
+    '미간에서 여유로움이 감지됩니다...',
+    '피부에서 건강운이 빛나고 있어요...',
+    '얼굴 전체에서 평화의 기운이...',
+    '눈가 주름에서 웃음의 흔적을 발견...',
+    '귀 모양에서 재물운을 읽는 중...',
+    '코 끝에서 연애운이 피어납니다...',
+    '관상학적으로 매우 복된 기운...',
+    '당신의 미소가 분석기를 행복하게 해요...',
+    '얼굴 대칭에서 조화를 발견 중...',
+    '이목구비에서 귀인운이 보입니다...',
+    '분석 중... 좋은 결과가 나올 것 같아요 ✨',
+  ],
+  normal: [
+    '얼굴 기운을 감지하는 중...',
+    '눈썹에서 강한 의심의 기운이...',
+    '코에서 재물운을 읽는 중...',
+    '입꼬리 각도 분석 완료. 결과가 심각합니다...',
+    '미간 거리에서 운명의 실마리를...',
+    '좌우 대칭도를 계산하는 중...',
+    '별자리와 관상을 대조하는 중...',
+    '관상학 데이터베이스 검색 중...',
+    '468개 포인트에서 기운을 읽는 중...',
+    '눈동자에서 숨겨진 야망을 감지...',
+    '이마 넓이로 지능을 추정하는 중...',
+    '코 길이와 자존심의 상관관계 분석 중...',
+    '턱선에서 의지력을 측정하는 중...',
+    '귀 위치에서 창의성을 읽는 중...',
+    '인중 길이로 수명을 점치는 중...',
+    '눈꼬리 각도에서 연애운을 해석 중...',
+    '광대뼈에서 사회성을 분석하는 중...',
+    '얼굴형에서 성격 유형을 추론하는 중...',
+    '관상의 비밀이 서서히 드러납니다...',
+    '운세 데이터를 종합하는 중...',
+  ],
+  brutal: [
+    '운명의 심판을 준비하는 중...',
+    '눈썹에서 불길한 기운이 감지됩니다...',
+    '코에서 파산의 징조를 읽는 중...',
+    '입꼬리 각도... 이건 좀 심각한데...',
+    '이마에서 고난의 기운이 폭발하고 있습니다...',
+    '대칭도 분석 결과가 처참합니다...',
+    '관상학적으로 전례 없는 케이스입니다...',
+    '도망치기엔 이미 늦었습니다...',
+    '분석기가 잠시 멈칫했습니다...',
+    '눈빛에서 깊은 고독이 읽힙니다...',
+    '코 비율이... 말을 아끼겠습니다...',
+    '미간에서 스트레스 지수 999 감지...',
+    '턱선에서 고집의 화석이 발견되었습니다...',
+    '관상학 AI가 울고 있습니다...',
+    '이 얼굴은 교과서에 실릴 예정입니다...',
+    '눈꼬리에서 야근의 기운이 폭발 중...',
+    '분석기가 정신적 데미지를 입었습니다...',
+    '얼굴에서 만우절의 기운이...',
+    '피해자(분석기)가 증거를 수집하는 중...',
+    '이 관상은 역사에 기록될 것입니다...',
+  ],
+};
 
 const BATCH_SIZE = 20;
 const BATCH_INTERVAL_MS = 50;
@@ -71,7 +127,7 @@ export default function ScanPage() {
 
   // State
   const [progress, setProgress] = useState(0);
-  const [loadingTextIdx, setLoadingTextIdx] = useState(0);
+  const [loadingText, setLoadingText] = useState('');
 
   // Derived (safe before guard — uses fallback)
   const selfieDataUrl = state?.selfieDataUrl ?? '';
@@ -201,12 +257,14 @@ export default function ScanPage() {
       }
       scanRafId = requestAnimationFrame(animateScanLine);
 
-      // --- Start loading text rotation ---
+      // --- Start loading text rotation (shuffled per intensity) ---
+      const texts = [...LOADING_TEXTS[intensity]].sort(() => Math.random() - 0.5);
       let textIdx = 0;
+      setLoadingText(texts[0]);
       textTimer = setInterval(() => {
         if (cancelled) return;
-        textIdx = Math.min(textIdx + 1, LOADING_TEXTS.length - 1);
-        setLoadingTextIdx(textIdx);
+        textIdx = (textIdx + 1) % texts.length;
+        setLoadingText(texts[textIdx]);
       }, TEXT_INTERVAL_MS);
 
       // --- API call in background (parallel with animation) ---
@@ -242,9 +300,13 @@ export default function ScanPage() {
       })();
 
       // --- Draw landmark points in batches ---
+      // Progress: 0-60% = landmark animation, 60-90% = fake progress while waiting API, 100% = done
       const totalLandmarks = landmarks?.length ?? 0;
       let batchIdx = 0;
       const totalBatches = Math.ceil(totalLandmarks / BATCH_SIZE);
+      let apiDone = false;
+
+      apiPromise.then(() => { apiDone = true; });
 
       function drawNextBatch() {
         if (cancelled || !landmarks) return;
@@ -254,47 +316,56 @@ export default function ScanPage() {
         drawLandmarkBatch(ctx, landmarks, start, end, canvas!.width, canvas!.height);
 
         batchIdx++;
-        const pct = Math.min(Math.round((batchIdx / totalBatches) * 100), 100);
+        // Landmark phase: 0% → 60%
+        const pct = Math.min(Math.round((batchIdx / totalBatches) * 60), 60);
         setProgress(pct);
 
         if (batchIdx < totalBatches) {
           batchTimer = setTimeout(drawNextBatch, BATCH_INTERVAL_MS);
         } else {
-          onAnimationComplete();
+          // Landmarks done → start fake progress while waiting for API
+          startWaitingProgress();
         }
       }
 
-      async function onAnimationComplete() {
-        if (cancelled) return;
+      // Fake progress 60% → 90% while API is pending, then jump to 100% when done
+      function startWaitingProgress() {
+        let fakePct = 60;
+        const fakeInterval = setInterval(() => {
+          if (cancelled) { clearInterval(fakeInterval); return; }
+          if (apiDone) {
+            clearInterval(fakeInterval);
+            setProgress(100);
+            setLoadingText('관상 분석 완료!');
+            // Brief pause then navigate
+            setTimeout(() => {
+              if (cancelled) return;
+              navigate('/result', {
+                state: {
+                  metrics: metricsResult,
+                  result: fortuneResult,
+                  selfieDataUrl,
+                  intensity,
+                },
+                replace: true,
+              });
+            }, 600);
+          } else {
+            // Slowly crawl toward 90%
+            fakePct = Math.min(fakePct + 1, 90);
+            setProgress(fakePct);
+          }
+        }, 300);
 
-        setLoadingTextIdx(LOADING_TEXTS.length - 1);
-        setProgress(100);
-
-        // Wait for the API response
-        await apiPromise;
-        if (cancelled) return;
-
-        // Brief dramatic pause at 100 %
-        await new Promise((r) => setTimeout(r, 600));
-        if (cancelled) return;
-
-        navigate('/result', {
-          state: {
-            metrics: metricsResult,
-            result: fortuneResult,
-            selfieDataUrl,
-            intensity,
-          },
-          replace: true,
-        });
+        // Store for cleanup
+        batchTimer = fakeInterval as unknown as ReturnType<typeof setTimeout>;
       }
 
       if (totalLandmarks > 0) {
         batchTimer = setTimeout(drawNextBatch, 300);
       } else {
-        // No face detected -- still proceed after API finishes
-        setProgress(100);
-        onAnimationComplete();
+        // No face detected -- start waiting progress immediately
+        startWaitingProgress();
       }
     }
 
@@ -423,9 +494,9 @@ export default function ScanPage() {
               fontFamily: 'var(--font-serif-kr)',
               textShadow: `0 0 18px ${glowColor}`,
             }}
-            key={loadingTextIdx}
+            key={loadingText}
           >
-            {LOADING_TEXTS[loadingTextIdx]}
+            {loadingText}
           </p>
         </div>
 

@@ -265,17 +265,13 @@ export default function ResultPage() {
         >
           <div className="tarot-scene">
             <div className={`tarot-card${isFlipped ? ' flipped' : ''}`}>
-              {/* --- BACK face (default visible) --- */}
+              {/* --- BACK face (custom image per intensity) --- */}
               <div className="tarot-face tarot-back">
-                <div className="tarot-back-glow" />
-                <div className="tarot-back-corner tl" />
-                <div className="tarot-back-corner tr" />
-                <div className="tarot-back-corner bl" />
-                <div className="tarot-back-corner br" />
-                <span className="tarot-back-sub">FORTUNE AWAITS</span>
-                <span className="tarot-back-symbol">{'\u2726'}</span>
-                <span className="tarot-back-title">AI 관상 타로</span>
-                <span className="tarot-back-sub">{'\u2500\u2500 \u2726 \u2726 \u2726 \u2500\u2500'}</span>
+                <img
+                  src={`/assets/cards/back-${intensity}.png`}
+                  alt="타로카드 뒷면"
+                  className="block h-full w-full object-cover"
+                />
               </div>
 
               {/* --- FRONT face (visible after flip) --- */}
