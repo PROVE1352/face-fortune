@@ -73,22 +73,24 @@ export default function CameraPage() {
     };
   }, [startCamera]);
 
-  // Capture selfie from video (keep stream alive for retake)
+  // Capture selfie from video — resize to max 480px for faster API
   const captureSelfie = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const MAX_SIZE = 512;
+    const ratio = Math.min(MAX_SIZE / video.videoWidth, MAX_SIZE / video.videoHeight, 1);
+    canvas.width = Math.round(video.videoWidth * ratio);
+    canvas.height = Math.round(video.videoHeight * ratio);
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
     setSelfieDataUrl(dataUrl);
   }, []);
 
